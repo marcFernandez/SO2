@@ -10,10 +10,17 @@ char *getColumn(int c, char *content){
 	int cnt = 0;
 	while(cnt < c){
 		content = strchr(++content, ',');
-		printf("%d\n",cnt);
 		cnt++;
 	}
 	++content;
+
+	int w = 0;
+	char res[5000];
+	while(content[w]!=','){
+		res[w] = content[w];
+		w++;
+	}
+	content = res;
 	return content;
 }
 
@@ -30,6 +37,7 @@ int main(int argc, char **argv){
 
 	FILE *fp;
 	char str[100];
+	char str2[5000];
 	void **ptr;
 
 	fp = fopen("aeroports.csv","r");
@@ -65,16 +73,10 @@ int main(int argc, char **argv){
 	}
 	printf("\n");
 
-	/*
-	for(i=0;i<num;i++){
-		printf("%s\n",ptr[i]);
-	}
-	*/
-
 	free(ptr);
 	fclose(fp);
 
-	fp = fopen("test_getColumna.csv","r");
+	fp = fopen("dades.csv","r");
 	if(fp==NULL){
 		perror("Error opening file");
 		return -1;
@@ -89,25 +91,30 @@ int main(int argc, char **argv){
 	insert_list(l,l_data);
 	/*************************************************/
 
+	/****** CODI PER AFEGIR LLISTA AL NODE ***********/
 	find_node(tree,"YUM")->list = l;
+	/*************************************************/
 
-	char *test;
-	test = malloc(sizeof(char)*20);
+	fgets(str2,5000,fp);
 
-	fgets(str,500,fp);
-
-	printf("%s\n",str);
-
-	test = getColumn(3,str);
+	/****** CODI PER OBTENIR LA COLUMNA **************/
+	char *delay,delarray[200];
+	memset(delarray, '\0', sizeof(delarray));
+	char *orig,*origarray;
+	char *dest,*destarray;
+	delay = malloc(sizeof(char)*200);
+	orig = malloc(sizeof(char)*200);
+	dest = malloc(sizeof(char)*200);
+	fgets(str2,5000,fp);
+	printf("%s\n",str2);
+	strcpy(getColumn(14,str2),delarray);
+	printf("%s\n",delarray);
+	strcpy(getColumn(16,str2),orig);
+	strcpy(getColumn(17,str2),dest);
+	/*************************************************/
 
 	printf(".................");
-	printf("\n%s\n",test);
-	printf(".................\n");
-
-	memcpy(test,&test[0],1);
-
-	printf(".................");
-	printf("\n%s\n",test);
+	printf("\nDe l'aeroport %s a l'aeroport %s hi ha un delay de %ss.\n",orig,dest,delay);
 	printf(".................\n");
 
 	free(l);
