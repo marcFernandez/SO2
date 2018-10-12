@@ -20,6 +20,7 @@ char *getColumn(int c, char *content){
 		res[w] = content[w];
 		w++;
 	}
+	res[w] = '\0';
 	content = res;
 	return content;
 }
@@ -97,26 +98,27 @@ int main(int argc, char **argv){
 
 	fgets(str2,5000,fp);
 
-	/****** CODI PER OBTENIR LA COLUMNA **************/
-	char *delay,delarray[200];
-	memset(delarray, '\0', sizeof(delarray));
-	char *orig,*origarray;
-	char *dest,*destarray;
-	delay = malloc(sizeof(char)*200);
-	orig = malloc(sizeof(char)*200);
-	dest = malloc(sizeof(char)*200);
-	fgets(str2,5000,fp);
-	printf("%s\n",str2);
-	strcpy(getColumn(14,str2),delarray);
-	printf("%s\n",delarray);
-	strcpy(getColumn(16,str2),orig);
-	strcpy(getColumn(17,str2),dest);
-	/*************************************************/
+	char *delay, *orig, *dest;
+	while(fgets(str2,5000,fp)!=NULL){
+		/****** CODI PER OBTENIR LA COLUMNA **************/
+		delay = getColumn(14,str2);
+		char del[strlen(delay)+1];
+		strncpy(del,delay,strlen(delay));
+		del[strlen(delay)] = '\0';
+		orig = getColumn(16,str2);
+		char ori[strlen(orig)+1];
+		strncpy(ori,orig,strlen(orig));
+		ori[strlen(orig)] = '\0';
+		dest = getColumn(17,str2);
+		char des[4];
+		strncpy(des,dest,3);
+		des[3] = '\0';
+		/*************************************************/
 
-	printf(".................");
-	printf("\nDe l'aeroport %s a l'aeroport %s hi ha un delay de %ss.\n",orig,dest,delay);
-	printf(".................\n");
-
+		printf(".................");
+		printf("\nDe l'aeroport %s a l'aeroport %s hi ha un delay de %ss.\n",ori,des,del);
+		printf(".................\n");
+	}
 	free(l);
 	fclose(fp);
 
