@@ -22,7 +22,7 @@
 rb_tree * tree = NULL;
 int num;
 
-/*
+
 char* getColumn(char *str, int columna){
     int count = 0,i,j=0;
     char *valor = calloc(4,sizeof(char));
@@ -40,7 +40,7 @@ char* getColumn(char *str, int columna){
     }
 	return valor;
 }
-*/
+/*
 char* getColumn(char *str, int columna,char *cosa){
     int count = 0,i,j=0;
     for(i = 0; i < strlen(str);i++){
@@ -55,9 +55,10 @@ char* getColumn(char *str, int columna,char *cosa){
 		    count++;
         }
     }
+    cosa[strlen(cosa)] = '\0';
 	return cosa;
 }
-
+*/
 int menu() 
 {
     char str[5];
@@ -108,11 +109,11 @@ void crearArbre(char * aeroports,char * dades){
 	delay = malloc(sizeof(char)*4);
 	orig = malloc(sizeof(char)*4);
 	dest = malloc(sizeof(char)*4);
-*/
+*//*
 	delay = calloc(4,sizeof(char));
 	orig = calloc(4,sizeof(char));
 	dest = calloc(4,sizeof(char));
-		
+*/
 	fp = fopen(aeroports,"r");
 	if(fp == NULL){
 		perror("Could not open file");
@@ -145,10 +146,16 @@ void crearArbre(char * aeroports,char * dades){
 
 	while(fgets(str2,5000,fp)!=NULL){
 
+		delay = getColumn(str2,15);
+		orig = getColumn(str2,17);
+		dest = getColumn(str2,18);
+		/*
 		getColumn(str2,15,delay);
 		getColumn(str2,17,orig);
 		getColumn(str2,18,dest);
-		
+		*/
+		printf("%s\n",dest);
+
 		n_data = find_node(tree,orig);
 		l_data = find_list(n_data->list, dest);
 		if(l_data == NULL){
@@ -360,9 +367,9 @@ int main(int argc, char **argv)
                 break;
 
             case 5:
-            	/*if(tree != NULL){
+            	if(tree != NULL){
             		delete_tree(tree);
-            	}*/
+            	}
                 break;
 
             default:
