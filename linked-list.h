@@ -38,7 +38,7 @@ typedef struct list_data_ {
   // This is the additional information that will be stored
   // within the structure. This additional information is associated
   // to the key. You may include any field you may need useful.
-  int delay;
+  float delay;
   int num_vols;
 } list_data;
 
@@ -77,5 +77,4 @@ void insert_list(list *l, list_data *data);
 list_data *find_list(list *l, LIST_KEY_TYPE key);
 void delete_first_list(list *l);
 void delete_list(list *l);
-list_item *getRoot(list *l);
 

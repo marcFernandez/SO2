@@ -44,8 +44,9 @@ static int compare_key1_equal_key2(LIST_KEY_TYPE key1, LIST_KEY_TYPE key2)
 
   rc = 0;
 
-  if (strcmp(key1,key2)==0)
+  if (strcmp(key1,key2)==0){
     rc = 1;
+  }
 
   return rc;
 }
@@ -67,10 +68,6 @@ void init_list(list *l)
 {
   l->num_items = 0;
   l->first = NULL;
-}
-
-list_item *getRoot(list *l){
-  return l->first;
 }
 
 /**

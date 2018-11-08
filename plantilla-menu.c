@@ -19,9 +19,10 @@
  *  Menu
  * 
  */
-char * masDestinos;
 rb_tree * tree = NULL;
+int num;
 
+/*
 char* getColumn(char *str, int columna){
     int count = 0,i,j=0;
     char *valor = calloc(4,sizeof(char));
@@ -35,9 +36,26 @@ char* getColumn(char *str, int columna){
 	    }
 	    if(str[i]==','){
 		    count++;
-	    }
-	}
+        }
+    }
 	return valor;
+}
+*/
+char* getColumn(char *str, int columna,char *cosa){
+    int count = 0,i,j=0;
+    for(i = 0; i < strlen(str);i++){
+		if(count == columna-1){
+		    while(str[i] != ','){	
+				cosa[j] = str[i];
+				j++;
+				i++;
+		    }
+	    }
+	    if(str[i]==','){
+		    count++;
+        }
+    }
+	return cosa;
 }
 
 int menu() 
@@ -68,7 +86,7 @@ void printRetard(char * IATA){
 		printf("Media de retardos para %s\n",IATA);
 		printf("Retardos para el aeropuerto: %s\n",IATA);
 		while(l_item){
-			printf("   %s  --  %.3f minutos\n",l_item->data->key,(float)(l_item->data->delay/l_item->data->num_vols));
+			printf("   %s  --  %.3f minutos\n",(char*)l_item->data->key,l_item->data->delay/l_item->data->num_vols);
 			l_item = l_item->next;
 		}
 	}
@@ -78,7 +96,7 @@ void printRetard(char * IATA){
 }
 
 void crearArbre(char * aeroports,char * dades){
-	int num,i;
+	int i;
 	list *l;
 	list_data *l_data;
 	list_item *l_item;
@@ -86,8 +104,16 @@ void crearArbre(char * aeroports,char * dades){
 	char str[100],str2[5000];
   	node_data *n_data;
 	char *delay, *orig, *dest;
-
-	fp = fopen("aeroports.csv","r");
+/*
+	delay = malloc(sizeof(char)*4);
+	orig = malloc(sizeof(char)*4);
+	dest = malloc(sizeof(char)*4);
+*/
+	delay = calloc(4,sizeof(char));
+	orig = calloc(4,sizeof(char));
+	dest = calloc(4,sizeof(char));
+		
+	fp = fopen(aeroports,"r");
 	if(fp == NULL){
 		perror("Could not open file");
 		exit(-1);
@@ -108,21 +134,20 @@ void crearArbre(char * aeroports,char * dades){
 			init_list(n_data->list);
 		}
 	}
-	masDestinos = n_data->key;	
 	fclose(fp);
-	fp = fopen("dades.csv","r");
+	fp = fopen(dades,"r");
 	if(fp==NULL){
 		perror("Could not open file");
 		exit(-1);
 	}
 	
-
 	fgets(str2,5000,fp);
 
 	while(fgets(str2,5000,fp)!=NULL){
-		delay = getColumn(str2,15);
-		orig = getColumn(str2,17);
-		dest = getColumn(str2,18);
+
+		getColumn(str2,15,delay);
+		getColumn(str2,17,orig);
+		getColumn(str2,18,dest);
 		
 		n_data = find_node(tree,orig);
 		l_data = find_list(n_data->list, dest);
@@ -144,23 +169,117 @@ void crearArbre(char * aeroports,char * dades){
 			}	
 			l_data->num_vols += 1;	
 		}
-		if(find_node(tree,masDestinos)->list->num_items < n_data->list->num_items){
-			masDestinos = n_data->key;
-		}
 		
 	}
-	
 	free(delay);
 	free(dest);
 	free(orig);
+	printf("Arbre creat\n");
 	fclose(fp);
+}
+void carregarArbre(FILE *fp){
+	char buffer[100];
+	int i,j1,num_nodes,num_destins,maxDest = 0,magic;
+	float x;
+	char *aux;
+	node_data *n_data;
+	list_item *l_item;
+	list_data *l_data;
+	list *l;
+
+	tree = malloc(sizeof(rb_tree));
+	init_tree(tree);
+	fread(&magic,sizeof(int),1,fp);
+	int realMagic = MAGIC_NUMBER;
+	if(55 != MAGIC_NUMBER){
+		perror("Error en el nombre Magic");
+		exit(-1);
+	}
+	fread(&num,sizeof(int),1,fp);
+	for(num_nodes=0;num_nodes<num;num_nodes++){
+
+		fread(buffer, 3, 1, fp);
+		buffer[3] = '\0';       
+		aux = (char*)buffer;
+		fread(&num_destins, sizeof(int), 1, fp); 
+		n_data = malloc(sizeof(node_data));
+		n_data->key = malloc(sizeof(char)*(strlen(aux)+1));
+		strcpy(n_data->key,aux);
+		l = (list *)malloc(sizeof(list));
+		n_data->list = l;
+		init_list(n_data->list);
+		insert_node(tree,n_data);
+		for(i=0;i<num_destins;i++){
+			fread(buffer,3,1,fp);
+			buffer[3] = '\0';    
+			l_data = malloc(sizeof(list_data));
+			aux = malloc(sizeof(char)*4);
+			strcpy(aux,buffer);
+			l_data->key = aux;
+			fread(&j1,sizeof(int),1,fp);
+			l_data->num_vols = j1;
+			fread(&x,sizeof(float),1,fp);
+			l_data->delay = x;
+			insert_list(n_data->list,l_data);
+		}
+	}
+	printf("Arbre creat\n");
+}
+void guardarArbre(node *child,FILE *fp)
+{
+    if (child->right != NIL)
+	guardarArbre(child->right,fp);
+
+    if (child->left != NIL)
+	guardarArbre(child->left,fp);
+
+    fwrite(child->data->key, strlen(child->data->key), 1, fp);
+    int num_destins = child->data->list->num_items;
+    fwrite(&num_destins,sizeof(int),1,fp);
+    if(num_destins > 0){
+	list_item *l_item = child->data->list->first;
+	int a;
+	float f;
+	while(l_item){
+		fwrite(l_item->data->key,strlen(l_item->data->key),1,fp);
+		a = l_item->data->num_vols;
+		fwrite(&a,sizeof(int),1,fp);
+		f = l_item->data->delay;
+		fwrite(&f,sizeof(float),1,fp);
+		l_item = l_item->next;
+	}
+
+    }
+}
+
+void recursion(rb_tree *t,node *child,char *res){
+	
+	if(child->right != NIL){
+		recursion(t,child->right,res);
+	}
+	if(child->left != NIL){
+		recursion(t,child->left,res);
+	}
+	if(child->data->list->num_items > find_node(t,res)->list->num_items){
+		strcpy(res,child->data->key);
+	}
+}
+
+char *massDestinos(rb_tree *tree){
+	node *n = tree->root;
+	char *r;
+	r = malloc(sizeof(char)*4);
+	strcpy(r,n->data->key);
+	recursion(tree,n,r);
+	return r;
 }
 
 int main(int argc, char **argv)
 {
     char str1[MAXLINE], str2[MAXLINE];
     int opcio;
-    node_data *n_data;
+    FILE *fp;
+
     if (argc != 1)
         printf("Opcions de la linia de comandes ignorades\n");
 
@@ -171,10 +290,10 @@ int main(int argc, char **argv)
 
         switch (opcio) {
             case 1:
-		if(tree != NULL){
-			printf("alliberant arbre\n");
-			delete_tree(tree);
-		}
+				if(tree != NULL){
+					printf("Alliberant arbre\n\n");
+					delete_tree(tree);
+				}
                 printf("Introdueix fitxer que conte llistat d'aeroports: ");
                 fgets(str1, MAXLINE, stdin);
                 str1[strlen(str1)-1]=0;
@@ -182,57 +301,68 @@ int main(int argc, char **argv)
                 printf("Introdueix fitxer de dades: ");
                 fgets(str2, MAXLINE, stdin);
                 str2[strlen(str2)-1]=0;
-		crearArbre(str1,str2);
+				crearArbre(str1,str2);
 		
-
                 break;
 
             case 2:
-                printf("Introdueix el nom de fitxer en el qual es desara l'arbre: ");
-                fgets(str1, MAXLINE, stdin);
-                str1[strlen(str1)-1]=0;
+				if(tree == NULL){
+					printf("Primer has de crear un arbre\n");
+				}
+				else{
+			        printf("Introdueix el nom de fitxer en el qual es desara l'arbre: ");
+			        fgets(str1, MAXLINE, stdin);
+			        str1[strlen(str1)-1]=0;
 
-		FILE *fp;
-		fp = fopen(str1,"w+");
-		n_data = malloc(sizeof(node_data));
-		n_data = find_node(tree,masDestinos);
-		printf("%s",(char*)n_data->key);
-		fwrite(n_data->key,sizeof(n_data->key)+1,1,fp);
-		fclose(fp);
+			
+		    		fp = fopen(str1,"w");
+		    		int magic = MAGIC_NUMBER;
+					fwrite(&magic,sizeof(int),1,fp);
+		    		fwrite(&num,sizeof(int),1,fp);
+					guardarArbre(tree->root,fp);
+	    			printf("Arbre guardat\n");
+		    		fclose(fp);
+				}
                 break;
 
             case 3:
                 printf("Introdueix nom de fitxer que conte l'arbre: ");
                 fgets(str1, MAXLINE, stdin);
                 str1[strlen(str1)-1]=0;
-
-		char buf[100];
-		fread(buf,sizeof(n_data->key)+1,1,fp);
-		printf("%s",(char*) buf);
-
+				fp = fopen(str1,"r");
+				if(tree != NULL){
+					delete_tree(tree);
+					printf("Alliberant arbre\n");
+				}
+				carregarArbre(fp);
+				fclose(fp);
                 break;
 
             case 4:
-                printf("Introdueix aeroport per cercar retard o polsa enter per saber l'aeroport amb mes destins: ");
-                fgets(str1, MAXLINE, stdin);
-                str1[strlen(str1)-1]=0;
-		if(tree == NULL){
-			printf("No hi ha arbre creat.");
-		}
-		else{
-			if(strlen(str1) == 0){
-				printf("\nAeropuerto con mas destinos\n");
-				printf("Aeropuerto con mas destinos: %s, destinos %d\n",masDestinos,find_node(tree,masDestinos)->list->num_items);
-			}
-			else{
-				printRetard(str1);
-			}
-		}
+				if(tree == NULL){
+					printf("No hi ha arbre creat.\n");
+				}
+				else{
+			        printf("Introdueix aeroport per cercar retard o polsa enter per saber l'aeroport amb mes destins: ");
+			        fgets(str1, MAXLINE, stdin);
+			        str1[strlen(str1)-1]=0;
+					if(strlen(str1) == 0){
+						char *md;
+						md = massDestinos(tree);
+						printf("\nAeropuerto con mas destinos %s.\n",md);
+						printf("\nCon un total de %d vuelos.\n",find_node(tree,md)->list->num_items);
+						free(md);
+					}
+					else{
+						printRetard(str1);
+					}
+				}
                 break;
 
             case 5:
-
-
+            	/*if(tree != NULL){
+            		delete_tree(tree);
+            	}*/
                 break;
 
             default:
